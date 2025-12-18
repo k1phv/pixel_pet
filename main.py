@@ -1,9 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
-
 # Класс питомца
-
 class Pet:
     def __init__(self, name="Pixel"):
         self.name = name
@@ -24,9 +22,7 @@ class Pet:
         self.energy = min(100, self.energy + 20)
         self.happiness = max(0, self.happiness - 5)
 
-
 # Основное приложение
-
 class PixelPetApp:
     def __init__(self, root):
         self.root = root
@@ -41,7 +37,7 @@ class PixelPetApp:
         # Имя питомца
         self.name_label = ttk.Label(frame, text=f"Имя: {self.pet.name}", font=("Arial", 16))
         self.name_label.grid(row=0, column=0, columnspan=2, pady=10)
-
+      
         # Статусы
         self.hunger_var = tk.IntVar(value=self.pet.hunger)
         self.energy_var = tk.IntVar(value=self.pet.energy)
@@ -88,8 +84,8 @@ class PixelPetApp:
         self.happiness_var.set(self.pet.happiness)
 
 # Точка входа
-
 if __name__ == "__main__":
     root = tk.Tk()
     app = PixelPetApp(root)
     root.mainloop()
+
