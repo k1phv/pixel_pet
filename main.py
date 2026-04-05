@@ -1,13 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
 import random
-import json  # Библиотека для сохранений
-import os    # Библиотека для проверки файлов
+import json
+import os
 
-SAVE_FILE = "pet_save.json" # Имя файла, где будут лежать сохранения
+SAVE_FILE = "pet_save.json"
 
 # ==========================================
-# 1. КЛАСС ПИТОМЦА (Логика + Сохранения)
+# 1. КЛАСС ПИТОМЦА (Логика)
 # ==========================================
 class Pet:
     def __init__(self, name):
@@ -17,25 +17,22 @@ class Pet:
         self.happiness = 50
         self.is_alive = True
         self.state = "normal"
-        self.age_ticks = 0 # Внутренние "часы" питомца
+        self.age_ticks = 0
+        self.coins = 10 # Стартовый капитал: 10 монеток!
 
-        self.load_progress() # При создании сразу пытаемся загрузить сохранение!
+        self.load_progress()
 
     def save_progress(self):
-        """Сохраняет параметры в файл json."""
         data = {
-            "hunger": self.hunger,
-            "energy": self.energy,
-            "happiness": self.happiness,
-            "is_alive": self.is_alive,
-            "state": self.state,
-            "age_ticks": self.age_ticks
+            "hunger": self.hunger, "energy": self.energy,
+            "happiness": self.happiness, "is_alive": self.is_alive,
+            "state": self.state, "age_ticks": self.age_ticks,
+            "coins": self.coins # Сохраняем монетки
         }
         with open(SAVE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
 
     def load_progress(self):
-        """Загружает параметры из файла, если он существует."""
         if os.path.exists(SAVE_FILE):
             with open(SAVE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -45,25 +42,34 @@ class Pet:
                 self.is_alive = data.get("is_alive", True)
                 self.state = data.get("state", "normal")
                 self.age_ticks = data.get("age_ticks", 0)
+                self.coins = data.get("coins", 10) # Загружаем монетки
 
-    # --- Старые методы (без изменений) ---
-    def feed(self):
+    # НОВЫЙ МЕТОД: Покупка еды
+    def buy_food(self, food_name, cost, hunger_boost, energy_boost):
         if not self.is_alive: return "Питомец мертв..."
-        self.hunger += 20
-        self.energy -= 5
+        if self.coins < cost:
+            return f"Не хватает монет! Нужно {cost} 💰."
+        
+        self.coins -= cost
+        self.hunger += hunger_boost
+        self.energy += energy_boost
         self._cap_stats()
         self.state = "happy"
-        return f"Вы покормили {self.name}. Ом-ном-ном!"
+        return f"Куплено: {food_name}. Ом-ном-ном!"
 
     def play(self):
         if not self.is_alive: return "Питомец мертв..."
-        if self.energy < 20: return f"{self.name} слишком устал для игр!"
+        if self.energy < 20: return f"{self.name} слишком устал!"
+        
+        earned_coins = random.randint(2, 6) # Случайный заработок от 2 до 6 монет
+        self.coins += earned_coins
+        
         self.happiness += 20
         self.energy -= 15
         self.hunger -= 10
         self._cap_stats()
         self.state = "happy"
-        return f"Вы поиграли с {self.name}. Ему весело!"
+        return f"Поиграли! Вы нашли {earned_coins} 💰."
 
     def sleep(self):
         if not self.is_alive: return "Питомец мертв..."
@@ -79,7 +85,7 @@ class Pet:
         self.hunger -= random.randint(1, 3)
         self.energy -= random.randint(1, 2)
         self.happiness -= random.randint(1, 3)
-        self.age_ticks += 1 # Питомец становится старше!
+        self.age_ticks += 1
         self._cap_stats()
 
         if self.hunger <= 0 or self.energy <= 0 or self.happiness <= 0:
@@ -97,7 +103,7 @@ class Pet:
 
 
 # ==========================================
-# 2. ПИКСЕЛЬНЫЕ АРТЫ ДЛЯ ПИТОМЦА
+# 2. ПИКСЕЛЬНЫЕ АРТЫ
 # ==========================================
 FRAMES = {
     "normal": ["....bbbb....", "..bbccccbb..", ".bccccccccb.", "bccbbccbbccb", "bccwwccwwccb", "bccbbccbbccb", "bpccccccccpb", ".bccbbbbccb.", "..bbccccbb..", "....bbbb...."],
@@ -114,15 +120,12 @@ class PetApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Pixel Pet - Твой виртуальный друг")
-        self.root.geometry("450x670") # Чуть увеличили окно
+        self.root.geometry("450x670")
         self.root.resizable(False, False)
-        
-        # ПЕРЕХВАТ НАЖАТИЯ "КРЕСТИКА" ДЛЯ СОХРАНЕНИЯ
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         self.style = ttk.Style()
         self.style.theme_use('clam')
-        
         self.pet = Pet("Пиксель")
         
         self.setup_ui()
@@ -130,9 +133,15 @@ class PetApp:
         self.game_loop()
 
     def setup_ui(self):
-        # --- Текст с возрастом ---
-        self.age_label = ttk.Label(self.root, text="Возраст: 0 дней", font=("Arial", 12, "bold"))
-        self.age_label.pack(pady=(10, 0))
+        # Фрейм для информации (Возраст и Монеты)
+        info_frame = ttk.Frame(self.root)
+        info_frame.pack(fill=tk.X, padx=40, pady=(15, 0))
+        
+        self.age_label = ttk.Label(info_frame, text="Возраст: 0 дн.", font=("Arial", 11, "bold"))
+        self.age_label.pack(side=tk.LEFT)
+        
+        self.coins_label = ttk.Label(info_frame, text="Монеты: 0 💰", font=("Arial", 11, "bold"), foreground="#d4af37")
+        self.coins_label.pack(side=tk.RIGHT)
 
         self.canvas = tk.Canvas(self.root, width=240, height=240, bg="#e0f7fa", highlightthickness=2)
         self.canvas.pack(pady=10)
@@ -155,8 +164,9 @@ class PetApp:
         btn_frame = ttk.Frame(self.root)
         btn_frame.pack(pady=15)
         
-        self.btn_feed = ttk.Button(btn_frame, text="🍖 Кормить", command=self.action_feed)
-        self.btn_feed.grid(row=0, column=0, padx=5, ipady=5)
+        # Кнопка кормить теперь открывает МАГАЗИН
+        self.btn_shop = ttk.Button(btn_frame, text="🛒 Магазин", command=self.open_shop)
+        self.btn_shop.grid(row=0, column=0, padx=5, ipady=5)
         
         self.btn_play = ttk.Button(btn_frame, text="🎾 Играть", command=self.action_play)
         self.btn_play.grid(row=0, column=1, padx=5, ipady=5)
@@ -166,23 +176,46 @@ class PetApp:
         
         self.log_text = tk.Text(self.root, height=5, width=45, state=tk.DISABLED, bg="#f5f5f5", font=("Arial", 10))
         self.log_text.pack(pady=10)
-        
-        # Если загрузились живыми, приветствуем
-        if self.pet.is_alive:
-            self.log(f"С возвращением! {self.pet.name} ждал вас.")
-        else:
-            self.log("Увы, питомец не дожил до вашего возвращения.")
 
+    # --- ЛОГИКА МАГАЗИНА ---
+    def open_shop(self):
+        """Открывает новое маленькое окно поверх основного."""
+        if not self.pet.is_alive: return
+        
+        shop_win = tk.Toplevel(self.root)
+        shop_win.title("Магазин еды")
+        shop_win.geometry("260x220")
+        shop_win.resizable(False, False)
+        
+        ttk.Label(shop_win, text="Что купим?", font=("Arial", 12, "bold")).pack(pady=10)
+        
+        # Лямбда-функции нужны, чтобы передать параметры еды в кнопку
+        btn1 = ttk.Button(shop_win, text="🍎 Яблоко (5 💰) [+15 сытость]", 
+                          command=lambda: self.buy_and_close(shop_win, "🍎 Яблоко", 5, 15, 0))
+        btn1.pack(pady=5, fill=tk.X, padx=20)
+        
+        btn2 = ttk.Button(shop_win, text="🍔 Бургер (15 💰) [+40 сыт, -5 эн.]", 
+                          command=lambda: self.buy_and_close(shop_win, "🍔 Бургер", 15, 40, -5))
+        btn2.pack(pady=5, fill=tk.X, padx=20)
+        
+        btn3 = ttk.Button(shop_win, text="☕ Кофе (10 💰) [+5 сыт, +25 эн.]", 
+                          command=lambda: self.buy_and_close(shop_win, "☕ Кофе", 10, 5, 25))
+        btn3.pack(pady=5, fill=tk.X, padx=20)
+
+    def buy_and_close(self, window, name, cost, h_boost, e_boost):
+        """Вызывает покупку и закрывает окно магазина."""
+        result = self.pet.buy_food(name, cost, h_boost, e_boost)
+        self.log(result)
+        self.update_ui()
+        window.destroy()
+
+    # --- ПРОДОЛЖЕНИЕ ИНТЕРФЕЙСА ---
     def log(self, message):
         self.log_text.config(state=tk.NORMAL)
         self.log_text.insert(tk.END, message + "\n")
         self.log_text.see(tk.END)
         self.log_text.config(state=tk.DISABLED)
 
-    def action_feed(self):
-        self.log(self.pet.feed())
-        self.update_ui()
-        
     def action_play(self):
         self.log(self.pet.play())
         self.update_ui()
@@ -196,12 +229,12 @@ class PetApp:
         self.bar_energy['value'] = self.pet.energy
         self.bar_happiness['value'] = self.pet.happiness
         
-        # Вычисляем дни (например, каждые 10 тиков = 1 день)
         days = self.pet.age_ticks // 10 
-        self.age_label.config(text=f"Возраст: {days} дней")
+        self.age_label.config(text=f"Возраст: {days} дн.")
+        self.coins_label.config(text=f"Монеты: {self.pet.coins} 💰")
         
         if not self.pet.is_alive:
-            self.btn_feed.config(state=tk.DISABLED)
+            self.btn_shop.config(state=tk.DISABLED)
             self.btn_play.config(state=tk.DISABLED)
             self.btn_sleep.config(state=tk.DISABLED)
             
@@ -228,19 +261,15 @@ class PetApp:
             if not self.pet.is_alive:
                 self.log("О нет! Пиксель отправился в лучший мир...")
                 
-            self.root.after(3000, self.game_loop) # 3000 мс = 3 секунды (чуть замедлили)
+            self.root.after(3000, self.game_loop)
             
             if self.pet.state in ["happy", "sleeping"]:
                 self.pet.state = "normal"
 
     def on_closing(self):
-        """Эта функция срабатывает при нажатии на крестик (закрытие окна)."""
-        self.pet.save_progress() # Сохраняем перед выходом
-        self.root.destroy()      # Закрываем окно
+        self.pet.save_progress()
+        self.root.destroy()
 
-# ==========================================
-# 4. ЗАПУСК ПРОГРАММЫ
-# ==========================================
 if __name__ == "__main__":
     root = tk.Tk()
     app = PetApp(root)
