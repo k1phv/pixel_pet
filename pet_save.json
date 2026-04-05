@@ -1,1 +1,1 @@
-{"hunger": 0, "energy": 75, "happiness": 93, "is_alive": false, "state": "dead", "age_ticks": 19, "coins": 15}
+{"hunger": 8, "energy": 34, "happiness": 98, "is_alive": true, "state": "sad", "age_ticks": 50, "coins": 10, "level": 4, "xp": 25, "color_name": "orange", "unlocked_colors": ["orange"]}
