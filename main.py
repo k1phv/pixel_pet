@@ -3,36 +3,56 @@ from tkinter import ttk, messagebox
 import random
 import json
 import os
+import time
 
-SAVE_FILE = "pet_save.json"
+SAVE_FILE = "pet_save_v4.json"
 
 # ==========================================
-# 1. КЛАСС ПИТОМЦА (Расширенная логика)
+# 1. КОНСТАНТЫ И НАСТРОЙКИ
+# ==========================================
+COLORS = {
+    "orange": {"main": "#ffb74d", "light": "#ffe9ca"},
+    "blue": {"main": "#64b5f6", "light": "#e3f2fd"},
+    "green": {"main": "#81c784", "light": "#e8f5e9"},
+    "gold": {"main": "#ffd700", "light": "#fff9c4"},
+    "purple": {"main": "#ba68c8", "light": "#f3e5f5"}
+}
+
+FOOD_TYPES = {
+    "🍎 Яблоко": {"cost": 10, "hunger": 20, "energy": 5, "desc": "Полезно и дешево"},
+    "🍔 Бургер": {"cost": 25, "hunger": 50, "energy": -10, "desc": "Очень сытно, но тянет в сон"},
+    "☕ Кофе": {"cost": 15, "hunger": 5, "energy": 40, "desc": "Заряд бодрости на весь день"},
+    "🍰 Торт": {"cost": 40, "hunger": 30, "energy": 10, "desc": "Дарит много счастья (+30)"}
+}
+
+# ==========================================
+# 2. ЯДРО ПИТОМЦА
 # ==========================================
 class Pet:
-    def __init__(self, name):
-        self.name = name
-        self.hunger = 50
-        self.energy = 80
-        self.happiness = 50
+    def __init__(self):
+        self.name = "Пиксель"
+        self.hunger = 70
+        self.energy = 70
+        self.happiness = 70
         self.is_alive = True
         self.state = "normal"
         self.age_ticks = 0
-        self.coins = 20
+        self.coins = 50
         self.level = 1
         self.xp = 0
-        self.color_name = "orange" # Текущий цвет
-        self.unlocked_colors = ["orange"] # Список купленных цветов
-
+        self.color_name = "orange"
+        self.unlocked_colors = ["orange"]
+        self.inventory = {} # Формат: {"Яблоко": 2, "Кофе": 1}
+        
         self.load_progress()
 
     def save_progress(self):
         data = {
-            "hunger": self.hunger, "energy": self.energy,
+            "name": self.name, "hunger": self.hunger, "energy": self.energy,
             "happiness": self.happiness, "is_alive": self.is_alive,
-            "state": self.state, "age_ticks": self.age_ticks,
-            "coins": self.coins, "level": self.level, "xp": self.xp,
-            "color_name": self.color_name, "unlocked_colors": self.unlocked_colors
+            "age_ticks": self.age_ticks, "coins": self.coins, 
+            "level": self.level, "xp": self.xp, "color": self.color_name,
+            "unlocked": self.unlocked_colors, "inv": self.inventory
         }
         with open(SAVE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
@@ -41,80 +61,56 @@ class Pet:
         if os.path.exists(SAVE_FILE):
             try:
                 with open(SAVE_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    self.hunger = data.get("hunger", 50)
-                    self.energy = data.get("energy", 80)
-                    self.happiness = data.get("happiness", 50)
-                    self.is_alive = data.get("is_alive", True)
-                    self.state = data.get("state", "normal")
-                    self.age_ticks = data.get("age_ticks", 0)
-                    self.coins = data.get("coins", 20)
-                    self.level = data.get("level", 1)
-                    self.xp = data.get("xp", 0)
-                    self.color_name = data.get("color_name", "orange")
-                    self.unlocked_colors = data.get("unlocked_colors", ["orange"])
+                    d = json.load(f)
+                    self.name = d.get("name", "Пиксель")
+                    self.hunger, self.energy = d.get("hunger"), d.get("energy")
+                    self.happiness = d.get("happiness")
+                    self.is_alive = d.get("is_alive")
+                    self.age_ticks = d.get("age_ticks")
+                    self.coins = d.get("coins")
+                    self.level, self.xp = d.get("level"), d.get("xp")
+                    self.color_name = d.get("color", "orange")
+                    self.unlocked_colors = d.get("unlocked", ["orange"])
+                    self.inventory = d.get("inv", {})
             except: pass
 
     def add_xp(self, amount):
-        """Система прокачки уровня."""
         self.xp += amount
-        xp_needed = self.level * 50
-        if self.xp >= xp_needed:
-            self.xp -= xp_needed
+        if self.xp >= self.level * 100:
+            self.xp = 0
             self.level += 1
-            return True # Сигнал о повышении уровня
+            return True
         return False
 
-    def buy_food(self, food_name, cost, hunger_boost, energy_boost):
-        if not self.is_alive: return "Питомец мертв..."
-        if self.coins < cost: return f"Нужно {cost} 💰!"
-        
-        self.coins -= cost
-        self.hunger += hunger_boost
-        self.energy += energy_boost
-        self.add_xp(5)
-        self._cap_stats()
-        self.state = "happy"
-        return f"Куплено: {food_name}!"
-
-    def play(self):
-        if not self.is_alive: return "Питомец мертв..."
-        if self.energy < 20: return "Слишком мало энергии!"
-        
-        earned = random.randint(5, 10)
-        self.coins += earned
-        self.energy -= 15
-        self.hunger -= 10
-        self.happiness += 25
-        upgraded = self.add_xp(15)
-        self._cap_stats()
-        self.state = "happy"
-        msg = f"Поиграли! +{earned} 💰"
-        if upgraded: msg += " | НОВЫЙ УРОВЕНЬ!"
-        return msg
-
-    def sleep(self):
-        if not self.is_alive: return "Питомец мертв..."
-        self.energy += 40
-        self.hunger -= 20
-        self.add_xp(10)
-        self._cap_stats()
-        self.state = "sleeping"
-        return "Питомец отдыхает..."
+    def eat_from_inventory(self, item_name):
+        if self.inventory.get(item_name, 0) > 0:
+            data = FOOD_TYPES[item_name]
+            self.inventory[item_name] -= 1
+            self.hunger += data["hunger"]
+            self.energy += data["energy"]
+            if item_name == "🍰 Торт": self.happiness += 30
+            self._cap_stats()
+            self.state = "happy"
+            return f"{self.name} съел {item_name}!"
+        return "Предмета нет в инвентаре."
 
     def tick(self):
         if not self.is_alive: return
-        self.hunger -= 2
+        self.hunger -= 1
         self.energy -= 1
-        self.happiness -= 2
+        self.happiness -= 1
         self.age_ticks += 1
-        self._cap_stats()
+        
+        # Рандомные события
+        if random.random() < 0.05: # 5% шанс события
+            self.coins += 5
+            return "Событие: Вы нашли 5 💰 на полу!"
 
         if self.hunger <= 0 or self.energy <= 0 or self.happiness <= 0:
             self.is_alive = False
             self.state = "dead"
-        elif self.hunger < 30: self.state = "sad"
-        elif self.state not in ["sleeping", "happy"]: self.state = "normal"
+        self._cap_stats()
+        return None
 
     def _cap_stats(self):
         self.hunger = max(0, min(100, self.hunger))
@@ -122,162 +118,221 @@ class Pet:
         self.happiness = max(0, min(100, self.happiness))
 
 # ==========================================
-# 2. ГРАФИЧЕСКИЕ ДАННЫЕ
+# 3. ИНТЕРФЕЙС И МИНИ-ИГРЫ
 # ==========================================
-COLOR_PALETTE = {
-    "orange": "#ffb74d", "blue": "#64b5f6", 
-    "green": "#81c784", "gold": "#ffd700", "purple": "#ba68c8"
-}
-
-FRAMES = {
-    "normal": ["....bbbb....", "..bbccccbb..", ".bccccccccb.", "bccbbccbbccb", "bccwwccwwccb", "bccbbccbbccb", "bpccccccccpb", ".bccbbbbccb.", "..bbccccbb..", "....bbbb...."],
-    "happy": ["....bbbb....", "..bbccccbb..", ".bccccccccb.", "bccbbccbbccb", "bccccccccccb", "bccccccccccb", "bpccbbbbccpb", ".bccbwwbccb.", "..bbccccbb..", "....bbbb...."],
-    "sad": ["....bbbb....", "..bbccccbb..", ".bccccccccb.", "bccbbccbbccb", "bccccccccccb", "bccccccccccb", "bpccccccccpb", ".bccbbbbccb.", "..bbccccbb..", "....bbbb...."],
-    "sleeping": ["....bbbb....", "..bbccccbb..", ".bccccccccb.", "bccccccccccb", "bccbbccbbccb", "bccccccccccb", "bccccccccccb", ".bccbbbbccb.", "..bbccccbb..", "....bbbb...."],
-    "dead": ["....bbbb....", "..bbbbbbbb..", ".bbbbbbbbbb.", "bbbwbbwwbbwb", "bbbwbwbwbwwb", "bbbwbbwwbbwb", "bbbbbbbbbbbb", ".bbbbbbbbbb.", "..bbbbbbbb..", "....bbbb...."]
-}
-
-# ==========================================
-# 3. ИНТЕРФЕЙС ПРИЛОЖЕНИЯ
-# ==========================================
-class PetApp:
+class App:
     def __init__(self, root):
         self.root = root
-        self.root.title("Pixel Pet v3.0 - Level Up Edition")
-        self.root.geometry("500x750")
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.title("Pixel Pet Ultra v4.0")
+        self.root.geometry("550x850")
+        self.root.configure(bg="#f5f5f5")
         
-        self.pet = Pet("Пиксель")
+        self.pet = Pet()
         self.setup_ui()
         self.update_ui()
         self.game_loop()
+        
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def setup_ui(self):
-        # Верхняя панель (Уровень и XP)
-        self.header = tk.Frame(self.root, bg="#333", height=40)
-        self.header.pack(fill=tk.X)
+        # Верхний статус
+        self.top_frame = tk.Frame(self.root, bg="#2c3e50", pady=10)
+        self.top_frame.pack(fill=tk.X)
         
-        self.lvl_label = tk.Label(self.header, text=f"LVL {self.pet.level}", fg="white", bg="#333", font=("Courier", 12, "bold"))
-        self.lvl_label.pack(side=tk.LEFT, padx=10)
+        self.name_label = tk.Label(self.top_frame, text=self.pet.name, fg="white", bg="#2c3e50", font=("Verdana", 14, "bold"))
+        self.name_label.pack()
         
-        self.xp_bar = ttk.Progressbar(self.header, length=300, mode='determinate')
-        self.xp_bar.pack(side=tk.LEFT, padx=10)
+        self.xp_bar = ttk.Progressbar(self.root, length=400, mode='determinate')
+        self.xp_bar.pack(pady=5)
+        
+        # Статы
+        self.info_panel = tk.Frame(self.root, bg="#f5f5f5")
+        self.info_panel.pack(pady=10)
+        
+        self.lbl_coins = tk.Label(self.info_panel, text=f"💰 {self.pet.coins}", font=("Arial", 12, "bold"), fg="#d4af37")
+        self.lbl_coins.grid(row=0, column=0, padx=20)
+        
+        self.lbl_level = tk.Label(self.info_panel, text=f"Уровень: {self.pet.level}", font=("Arial", 12))
+        self.lbl_level.grid(row=0, column=1, padx=20)
 
-        # Панель ресурсов
-        res_frame = tk.Frame(self.root)
-        res_frame.pack(fill=tk.X, padx=20, pady=10)
-        self.coin_label = tk.Label(res_frame, text=f"💰 {self.pet.coins}", font=("Arial", 14, "bold"), fg="#b8860b")
-        self.coin_label.pack(side=tk.RIGHT)
-        
-        # Холст
-        self.canvas = tk.Canvas(self.root, width=300, height=300, bg="#f0f0f0", highlightthickness=0)
+        # Холст питомца
+        self.canvas = tk.Canvas(self.root, width=320, height=320, bg="white", highlightthickness=1, highlightbackground="#ddd")
         self.canvas.pack(pady=10)
 
-        # Индикаторы
-        self.create_stat_bar("Голод", "orange")
-        self.create_stat_bar("Энергия", "blue")
-        self.create_stat_bar("Счастье", "pink")
+        # Прогресс-бары (динамическое создание)
+        self.bars = {}
+        for stat in ["Голод", "Энергия", "Счастье"]:
+            frame = tk.Frame(self.root, bg="#f5f5f5")
+            frame.pack(fill=tk.X, padx=80)
+            tk.Label(frame, text=stat, width=10, anchor='w', bg="#f5f5f5").pack(side=tk.LEFT)
+            bar = ttk.Progressbar(frame, length=250, mode='determinate')
+            bar.pack(side=tk.RIGHT, pady=3)
+            self.bars[stat] = bar
 
-        # Кнопки (Сетка 2x2)
-        btn_grid = tk.Frame(self.root)
-        btn_grid.pack(pady=20)
+        # Кнопочная панель (Сетка)
+        self.btn_frame = tk.Frame(self.root, bg="#f5f5f5")
+        self.btn_frame.pack(pady=20)
         
-        tk.Button(btn_grid, text="🛒 МАГАЗИН", width=15, height=2, command=self.open_shop, bg="#ffecb3").grid(row=0, column=0, padx=5, pady=5)
-        tk.Button(btn_grid, text="🎾 ИГРАТЬ", width=15, height=2, command=self.action_play, bg="#c8e6c9").grid(row=0, column=1, padx=5, pady=5)
-        tk.Button(btn_grid, text="👕 ГАРДЕРОБ", width=15, height=2, command=self.open_wardrobe, bg="#e1f5fe").grid(row=1, column=0, padx=5, pady=5)
-        tk.Button(btn_grid, text="💤 СПАТЬ", width=15, height=2, command=self.action_sleep, bg="#d1c4e9").grid(row=1, column=1, padx=5, pady=5)
+        btns = [
+            ("🍕 Магазин", self.open_shop, 0, 0),
+            ("🎒 Рюкзак", self.open_inventory, 0, 1),
+            ("🎮 Игры", self.open_games, 1, 0),
+            ("👕 Стиль", self.open_wardrobe, 1, 1)
+        ]
+        
+        for text, cmd, r, c in btns:
+            tk.Button(self.btn_frame, text=text, width=18, height=2, font=("Arial", 10, "bold"),
+                      command=cmd, bg="white", relief=tk.GROOVE).grid(row=r, column=c, padx=5, pady=5)
 
-        # Журнал
-        self.log_box = tk.Text(self.root, height=4, width=50, state='disabled', font=("Arial", 9))
-        self.log_box.pack(padx=20, pady=10)
+        # Лог событий
+        self.log_box = tk.Listbox(self.root, height=4, width=60, font=("Consolas", 9), bg="#eee")
+        self.log_box.pack(pady=10)
 
-    def create_stat_bar(self, name, color):
-        f = tk.Frame(self.root)
-        f.pack(fill=tk.X, padx=50)
-        tk.Label(f, text=name, width=8, anchor='w').pack(side=tk.LEFT)
-        bar = ttk.Progressbar(f, length=250, mode='determinate')
-        bar.pack(side=tk.RIGHT, pady=2)
-        setattr(self, f"bar_{name.lower()}", bar)
+    # --- МИНИ-ИГРА: Угадай число ---
+    def open_games(self):
+        game_win = tk.Toplevel(self.root)
+        game_win.title("Мини-игры")
+        game_win.geometry("300x350")
+        
+        tk.Label(game_win, text="Угадай число (1-10)", font=("Arial", 12, "bold")).pack(pady=10)
+        
+        entry = tk.Entry(game_win, font=("Arial", 14))
+        entry.pack(pady=10)
+        
+        def play():
+            try:
+                val = int(entry.get())
+                secret = random.randint(1, 10)
+                if val == secret:
+                    reward = 20
+                    self.pet.coins += reward
+                    messagebox.showinfo("Победа!", f"Верно! Это было {secret}. Вы получили {reward} 💰")
+                else:
+                    messagebox.showwarning("Мимо", f"Нет, это было {secret}. Попробуйте еще раз!")
+                self.pet.happiness += 10
+                self.pet.energy -= 5
+                self.update_ui()
+                game_win.destroy()
+            except: pass
+
+        tk.Button(game_win, text="Проверить удачу!", command=play, bg="#a5d6a7").pack(pady=10)
+
+    # --- ИНВЕНТАРЬ ---
+    def open_inventory(self):
+        inv_win = tk.Toplevel(self.root)
+        inv_win.title("Ваш рюкзак")
+        inv_win.geometry("300x400")
+        
+        if not self.pet.inventory or sum(self.pet.inventory.values()) == 0:
+            tk.Label(inv_win, text="Рюкзак пуст...").pack(pady=20)
+            return
+
+        for item, count in self.pet.inventory.items():
+            if count > 0:
+                f = tk.Frame(inv_win)
+                f.pack(fill=tk.X, padx=20, pady=5)
+                tk.Label(f, text=f"{item} (x{count})").pack(side=tk.LEFT)
+                tk.Button(f, text="Съесть", command=lambda i=item: self.use_item(i, inv_win)).pack(side=tk.RIGHT)
+
+    def use_item(self, item, win):
+        msg = self.pet.eat_from_inventory(item)
+        self.log(msg)
+        self.update_ui()
+        win.destroy()
 
     def open_shop(self):
         shop = tk.Toplevel(self.root)
-        shop.title("Магазин")
-        shop.geometry("300x250")
+        shop.title("Магазин еды")
+        shop.geometry("350x450")
         
-        items = [("Яблоко", 10, 20, 0), ("Пицца", 25, 50, -10), ("Энергетик", 15, 5, 40)]
-        for name, price, h, e in items:
-            tk.Button(shop, text=f"{name} ({price}💰)\n+{h} сыт. / {e} энерг.", 
-                      command=lambda n=name, p=price, h=h, e=e: self.buy_food_logic(n, p, h, e, shop)).pack(fill=tk.X, padx=20, pady=5)
+        for name, data in FOOD_TYPES.items():
+            f = tk.LabelFrame(shop, text=name, padx=10, pady=5)
+            f.pack(fill=tk.X, padx=15, pady=5)
+            tk.Label(f, text=data["desc"], font=("Arial", 8, "italic")).pack(side=tk.LEFT)
+            tk.Button(f, text=f"Купить ({data['cost']}💰)", 
+                      command=lambda n=name: self.buy_logic(n)).pack(side=tk.RIGHT)
 
-    def buy_food_logic(self, n, p, h, e, win):
-        self.log(self.pet.buy_food(n, p, h, e))
-        self.update_ui()
-        win.destroy()
+    def buy_logic(self, name):
+        cost = FOOD_TYPES[name]["cost"]
+        if self.pet.coins >= cost:
+            self.pet.coins -= cost
+            self.pet.inventory[name] = self.pet.inventory.get(name, 0) + 1
+            self.log(f"Куплено: {name}. Добавлено в рюкзак.")
+            self.update_ui()
+        else:
+            messagebox.showerror("Ошибка", "Маловато золотишка!")
 
     def open_wardrobe(self):
         w = tk.Toplevel(self.root)
         w.title("Гардероб")
-        w.geometry("300x300")
-        
-        for name, hex_code in COLOR_PALETTE.items():
-            state = "ВЫБРАТЬ" if name in self.pet.unlocked_colors else f"КУПИТЬ (50💰)"
-            btn = tk.Button(w, text=f"{name.upper()}\n{state}", bg=hex_code,
-                            command=lambda n=name: self.change_color_logic(n, w))
-            btn.pack(fill=tk.X, padx=20, pady=5)
+        for color_name, vals in COLORS.items():
+            f = tk.Frame(w, bg=vals["light"], pady=5)
+            f.pack(fill=tk.X)
+            if color_name in self.pet.unlocked_colors:
+                btn_text = "Надеть"
+                cmd = lambda n=color_name: self.set_color(n)
+            else:
+                btn_text = "Купить (100 💰)"
+                cmd = lambda n=color_name: self.buy_color(n)
+            
+            tk.Label(f, text=color_name.upper(), bg=vals["light"], width=15).pack(side=tk.LEFT)
+            tk.Button(f, text=btn_text, command=cmd).pack(side=tk.RIGHT, padx=10)
 
-    def change_color_logic(self, name, win):
-        if name in self.pet.unlocked_colors:
-            self.pet.color_name = name
-            self.log(f"Цвет изменен на {name}!")
-        elif self.pet.coins >= 50:
-            self.pet.coins -= 50
-            self.pet.unlocked_colors.append(name)
-            self.pet.color_name = name
-            self.log(f"Куплен новый цвет: {name}!")
-        else:
-            self.log("Недостаточно монет!")
+    def set_color(self, name):
+        self.pet.color_name = name
+        self.log(f"Цвет изменен на {name}")
         self.update_ui()
-        win.destroy()
+
+    def buy_color(self, name):
+        if self.pet.coins >= 100:
+            self.pet.coins -= 100
+            self.pet.unlocked_colors.append(name)
+            self.set_color(name)
+        else: self.log("Нужно больше монет!")
 
     def log(self, msg):
-        self.log_box.config(state='normal')
-        self.log_box.insert('1.0', msg + "\n")
-        self.log_box.config(state='disabled')
-
-    def action_play(self): self.log(self.pet.play()); self.update_ui()
-    def action_sleep(self): self.log(self.pet.sleep()); self.update_ui()
+        self.log_box.insert(0, f"[{time.strftime('%H:%M')}] {msg}")
 
     def update_ui(self):
-        self.bar_голод['value'] = self.pet.hunger
-        self.bar_энергия['value'] = self.pet.energy
-        self.bar_счастье['value'] = self.pet.happiness
-        self.xp_bar['value'] = (self.pet.xp / (self.pet.level * 50)) * 100
-        self.lvl_label.config(text=f"LVL {self.pet.level}")
-        self.coin_label.config(text=f"💰 {self.pet.coins}")
+        self.bars["Голод"]['value'] = self.pet.hunger
+        self.bars["Энергия"]['value'] = self.pet.energy
+        self.bars["Счастье"]['value'] = self.pet.happiness
+        self.xp_bar['value'] = (self.pet.xp / (self.pet.level * 100)) * 100
+        self.lbl_coins.config(text=f"💰 {self.pet.coins}")
+        self.lbl_level.config(text=f"Уровень: {self.pet.level}")
         self.draw_pet()
 
     def draw_pet(self):
         self.canvas.delete("all")
-        f = FRAMES.get(self.pet.state, FRAMES["normal"])
-        ps = 25
-        c_map = {'.':"", 'b':"#222", 'w':"#fff", 'c':COLOR_PALETTE[self.pet.color_name], 'p':"#ff80ab"}
-        for r_idx, row in enumerate(f):
-            for c_idx, char in enumerate(row):
-                if char in c_map and c_map[char]:
-                    x, y = c_idx*ps+25, r_idx*ps+25
-                    self.canvas.create_rectangle(x, y, x+ps, y+ps, fill=c_map[char], outline=c_map[char])
+        if not self.pet.is_alive:
+            self.canvas.create_text(160, 160, text="👻", font=("Arial", 80))
+            return
+        
+        color = COLORS[self.pet.color_name]["main"]
+        # Рисуем тело (упрощенный пиксельный стиль через круги и квадраты)
+        self.canvas.create_oval(80, 100, 240, 260, fill=color, outline="#333", width=2)
+        # Глаза
+        self.canvas.create_oval(110, 140, 130, 160, fill="white")
+        self.canvas.create_oval(190, 140, 210, 160, fill="white")
+        # Зрачки (меняются от состояния)
+        p_y = 155 if self.pet.state == "sad" else 150
+        self.canvas.create_oval(118, p_y-2, 122, p_y+2, fill="black")
+        self.canvas.create_oval(198, p_y-2, 202, p_y+2, fill="black")
 
     def game_loop(self):
         if self.pet.is_alive:
-            self.pet.tick()
+            event = self.pet.tick()
+            if event: self.log(event)
             self.update_ui()
-            self.root.after(4000, self.game_loop)
+            self.root.after(5000, self.game_loop)
 
-    def on_closing(self):
+    def on_close(self):
         self.pet.save_progress()
         self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = PetApp(root)
+    style = ttk.Style()
+    style.theme_use('clam')
+    app = App(root)
     root.mainloop()
