@@ -21,3 +21,10 @@ ACHIEVEMENTS = {
     "survivor": {"title": "Выживший", "desc": "Прожить 50 тиков", "goal": 50},
     "glutton": {"title": "Обжора", "desc": "Съесть 10 предметов", "goal": 10}
 }
+
+WEATHER_TYPES = {
+    "Солнечно": {"drain_mod": 1.0, "icon": "☀️"},
+    "Дождь": {"drain_mod": 1.5, "icon": "🌧️"},
+    "Гроза": {"drain_mod": 2.0, "icon": "⚡"},
+    "Туман": {"drain_mod": 0.8, "icon": "🌫️"}
+}

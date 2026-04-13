@@ -1,14 +1,16 @@
 import json
 import os
 import random
-from constants import SAVE_FILE, FOOD_TYPES
+from constants import SAVE_FILE, FOOD_TYPES, WEATHER_TYPES
+from achievements import AchievementManager
+from logger import logger
 
 class Pet:
     def __init__(self):
         self.name = "Пиксель"
-        self.hunger = 70
-        self.energy = 70
-        self.happiness = 70
+        self.hunger = 100
+        self.energy = 100
+        self.happiness = 100
         self.is_alive = True
         self.state = "normal"
         self.age_ticks = 0
@@ -18,8 +20,12 @@ class Pet:
         self.color_name = "orange"
         self.unlocked_colors = ["orange"]
         self.inventory = {} 
+        self.food_eaten = 0
+        self.current_weather = "Солнечно"
         
+        self.achievements = AchievementManager()
         self.load_progress()
+        logger.log(f"Питомец {self.name} инициализирован.")
 
     def save_progress(self):
         data = {
@@ -27,10 +33,12 @@ class Pet:
             "happiness": self.happiness, "is_alive": self.is_alive,
             "age_ticks": self.age_ticks, "coins": self.coins, 
             "level": self.level, "xp": self.xp, "color": self.color_name,
-            "unlocked": self.unlocked_colors, "inv": self.inventory
+            "unlocked": self.unlocked_colors, "inv": self.inventory,
+            "food_eaten": self.food_eaten, "weather": self.current_weather,
+            "ach_list": self.achievements.unlocked
         }
         with open(SAVE_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
 
     def load_progress(self):
         if os.path.exists(SAVE_FILE):
@@ -38,21 +46,24 @@ class Pet:
                 with open(SAVE_FILE, "r", encoding="utf-8") as f:
                     d = json.load(f)
                     self.name = d.get("name", "Пиксель")
-                    self.hunger, self.energy = d.get("hunger")
-                    self.happiness = d.get("happiness")
-                    self.is_alive = d.get("is_alive")
-                    self.age_ticks = d.get("age_ticks")
-                    self.coins = d.get("coins")
-                    self.level, self.xp = d.get("level"), d.get("xp")
+                    self.hunger, self.energy = d.get("hunger", 100), d.get("energy", 100)
+                    self.happiness = d.get("happiness", 100)
+                    self.is_alive = d.get("is_alive", True)
+                    self.age_ticks = d.get("age_ticks", 0)
+                    self.coins = d.get("coins", 50)
+                    self.level, self.xp = d.get("level", 1), d.get("xp", 0)
                     self.color_name = d.get("color", "orange")
                     self.unlocked_colors = d.get("unlocked", ["orange"])
                     self.inventory = d.get("inv", {})
+                    self.food_eaten = d.get("food_eaten", 0)
+                    self.current_weather = d.get("weather", "Солнечно")
+                    self.achievements.unlocked = d.get("ach_list", [])
             except: pass
 
     def add_xp(self, amount):
         self.xp += amount
         if self.xp >= self.level * 100:
-            self.xp = 0
+            self.xp -= self.level * 100
             self.level += 1
             return True
         return False
@@ -63,28 +74,33 @@ class Pet:
             self.inventory[item_name] -= 1
             self.hunger += data["hunger"]
             self.energy += data["energy"]
+            self.food_eaten += 1
             if item_name == "🍰 Торт": self.happiness += 30
             self._cap_stats()
             self.state = "happy"
             return f"{self.name} съел {item_name}!"
-        return "Предмета нет в инвентаре."
+        return "Предмета нет."
 
     def tick(self):
-        if not self.is_alive: return
-        self.hunger -= 1
-        self.energy -= 1
-        self.happiness -= 1
+        if not self.is_alive: return None
+        
+        mod = WEATHER_TYPES[self.current_weather]["drain_mod"]
+        self.hunger -= 1 * mod
+        self.energy -= 1 * mod
+        self.happiness -= 1 * mod
         self.age_ticks += 1
         
-        if random.random() < 0.05: 
-            self.coins += 5
-            return "Событие: Вы нашли 5 💰 на полу!"
+        if random.random() < 0.03:
+            self.current_weather = random.choice(list(WEATHER_TYPES.keys()))
+            logger.log(f"Погода изменилась: {self.current_weather}")
 
+        self._cap_stats()
         if self.hunger <= 0 or self.energy <= 0 or self.happiness <= 0:
             self.is_alive = False
             self.state = "dead"
-        self._cap_stats()
-        return None
+            logger.log("Питомец погиб.", "WARNING")
+            
+        return self.achievements.check(self)
 
     def _cap_stats(self):
         self.hunger = max(0, min(100, self.hunger))
