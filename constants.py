@@ -1,4 +1,4 @@
-SAVE_FILE = "pet_save_v4.json"
+SAVE_FILE = "pet_save_v5.json"
 
 COLORS = {
     "orange": {"main": "#ffb74d", "light": "#ffe9ca"},
@@ -10,7 +10,14 @@ COLORS = {
 
 FOOD_TYPES = {
     "🍎 Яблоко": {"cost": 10, "hunger": 20, "energy": 5, "desc": "Полезно и дешево"},
-    "🍔 Бургер": {"cost": 25, "hunger": 50, "energy": -10, "desc": "Очень сытно, но тянет в сон"},
-    "☕ Кофе": {"cost": 15, "hunger": 5, "energy": 40, "desc": "Заряд бодрости на весь день"},
-    "🍰 Торт": {"cost": 40, "hunger": 30, "energy": 10, "desc": "Дарит много счастья (+30)"}
+    "🍔 Бургер": {"cost": 25, "hunger": 50, "energy": -10, "desc": "Сытно, но клонит в сон"},
+    "☕ Кофе": {"cost": 15, "hunger": 5, "energy": 40, "desc": "Заряд бодрости"},
+    "🍰 Торт": {"cost": 40, "hunger": 30, "energy": 10, "desc": "Счастье (+30)"},
+    "🧪 Витамин": {"cost": 100, "hunger": 0, "energy": 100, "desc": "Полное восстановление сил"}
+}
+
+ACHIEVEMENTS = {
+    "rich": {"title": "Богач", "desc": "Накопить 200 монет", "goal": 200},
+    "survivor": {"title": "Выживший", "desc": "Прожить 50 тиков", "goal": 50},
+    "glutton": {"title": "Обжора", "desc": "Съесть 10 предметов", "goal": 10}
 }
