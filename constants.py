@@ -1,4 +1,4 @@
-SAVE_FILE = "pet_save_v5.json"
+SAVE_FILE = "pet_save_v6.json"
 
 COLORS = {
     "orange": {"main": "#ffb74d", "light": "#ffe9ca"},
@@ -13,13 +13,14 @@ FOOD_TYPES = {
     "🍔 Бургер": {"cost": 25, "hunger": 50, "energy": -10, "desc": "Сытно, но клонит в сон"},
     "☕ Кофе": {"cost": 15, "hunger": 5, "energy": 40, "desc": "Заряд бодрости"},
     "🍰 Торт": {"cost": 40, "hunger": 30, "energy": 10, "desc": "Счастье (+30)"},
-    "🧪 Витамин": {"cost": 100, "hunger": 0, "energy": 100, "desc": "Полное восстановление сил"}
+    "🧪 Витамин": {"cost": 100, "hunger": 0, "energy": 100, "desc": "Полное восстановление"}
 }
 
 ACHIEVEMENTS = {
     "rich": {"title": "Богач", "desc": "Накопить 200 монет", "goal": 200},
     "survivor": {"title": "Выживший", "desc": "Прожить 50 тиков", "goal": 50},
-    "glutton": {"title": "Обжора", "desc": "Съесть 10 предметов", "goal": 10}
+    "glutton": {"title": "Обжора", "desc": "Съесть 10 предметов", "goal": 10},
+    "zombie": {"title": "Восставший", "desc": "Воскресить питомца", "goal": 1}
 }
 
 WEATHER_TYPES = {

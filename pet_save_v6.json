@@ -1,0 +1,21 @@
+{
+    "name": "\u041f\u0438\u043a\u0441\u0435\u043b\u044c",
+    "hunger": 82.0,
+    "energy": 82.0,
+    "happiness": 82.0,
+    "is_alive": true,
+    "age_ticks": 194,
+    "coins": 42,
+    "level": 1,
+    "xp": 75,
+    "color": "orange",
+    "unlocked": [
+        "orange"
+    ],
+    "inv": {},
+    "food_eaten": 0,
+    "weather": "\u0413\u0440\u043e\u0437\u0430",
+    "ach_list": [
+        "survivor"
+    ]
+}
