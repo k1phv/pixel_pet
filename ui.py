@@ -39,7 +39,6 @@ class App:
         self.setup_ach_tab()
 
     def setup_main_tab(self):
-        # Панель заголовка
         header = tk.Frame(self.main_tab, bg="#2c3e50", pady=10)
         header.pack(fill=tk.X)
         
@@ -49,7 +48,6 @@ class App:
         self.name_label = tk.Label(header, text=self.pet.name, fg="white", bg="#2c3e50", font=("Verdana", 14, "bold"))
         self.name_label.pack(side=tk.LEFT, padx=10)
 
-        # Панель инфо
         info_panel = tk.Frame(self.main_tab, bg="white")
         info_panel.pack(pady=10)
         
@@ -59,15 +57,12 @@ class App:
         self.lbl_level = tk.Label(info_panel, text="Уровень: 1", font=("Arial", 14, "bold"), bg="white")
         self.lbl_level.grid(row=0, column=1, padx=30)
 
-        # Прогресс уровня
         self.xp_bar = ttk.Progressbar(self.main_tab, length=450, mode='determinate')
         self.xp_bar.pack(pady=10)
 
-        # Холст для рисования
         self.canvas = tk.Canvas(self.main_tab, width=320, height=320, bg="white", highlightthickness=1)
         self.canvas.pack(pady=10)
 
-        # Полоски статов
         self.bars = {}
         for stat in ["Голод", "Энергия", "Счастье"]:
             f = tk.Frame(self.main_tab, bg="white")
@@ -83,16 +78,21 @@ class App:
             self.bars[stat] = bar
             self.stat_labels[stat] = val_lbl
 
-        # Кнопки
         btn_container = tk.Frame(self.main_tab, bg="white")
         btn_container.pack(pady=20)
         
         actions = [
-            ("🍕 Магазин", self.open_shop), ("🎒 Рюкзак", self.open_inventory),
-            ("🎮 Игровой Центр", self.open_games), ("👕 Стиль", self.open_wardrobe)
+            ("🍕 Магазин", self.open_shop), 
+            ("🎒 Рюкзак", self.open_inventory),
+            ("🎮 Игры", self.open_games), 
+            ("👕 Стиль", self.open_wardrobe),
+            ("💤 Положить спать", self.pet_sleep)
         ]
+
         for i, (txt, cmd) in enumerate(actions):
-            tk.Button(btn_container, text=txt, width=16, height=2, font=("Arial", 9, "bold"), bg="#e0e0e0", command=cmd).grid(row=i//2, column=i%2, padx=10, pady=5)
+            tk.Button(btn_container, text=txt, width=16, height=2, 
+                      font=("Arial", 9, "bold"), bg="#e0e0e0", 
+                      command=cmd).grid(row=i//2, column=i%2, padx=10, pady=5)
 
         self.log_box = tk.Listbox(self.main_tab, height=5, width=70, bg="#f5f5f5", font=("Arial", 9))
         self.log_box.pack(pady=10)
@@ -266,3 +266,11 @@ class App:
     def on_close(self):
         self.pet.save_progress()
         self.root.destroy()
+
+    def pet_sleep(self):
+        if not self.pet.is_alive:
+            messagebox.showwarning("Упс", "Пиксель спит вечным сном... Воскресите его.")
+            return
+        result = self.pet.sleep()
+        self.log(result)
+        self.update_ui()

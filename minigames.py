@@ -42,7 +42,8 @@ class GameHub:
             score[0] += 1
             self.pet.coins += 2
             self.pet.add_xp(5)
-            self.log("Пойман пиксель! +2 💰")
+            self.pet.drain_stats(hunger_points=1, energy_points=2)
+            self.log("Пойман пиксель! +2 💰 -1🍎 -2⚡")
             btn.config(bg=random.choice(["red", "blue", "green", "orange"]))
             if score[0] >= 10:
                 messagebox.showinfo("Победа!", "Отличная реакция! Бонус +20 монет!", parent=game_win)
@@ -69,7 +70,8 @@ class GameHub:
         choices = {"Камень": "🪨", "Ножницы": "✂️", "Бумага": "📜"}
         
         def resolve(player_choice):
-            self.pet.coins -= 10 # Забираем ставку
+            self.pet.coins -= 10
+            self.pet.drain_stats(hunger_points=5, energy_points=10)
             bot_choice = random.choice(list(choices.keys()))
             result_txt = f"Бот выбрал: {bot_choice}\n\n"
             

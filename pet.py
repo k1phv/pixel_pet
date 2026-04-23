@@ -127,13 +127,30 @@ class Pet:
         if not self.is_alive:
             return "👻"
         if self.hunger < 30:
-            return "🍎?" # Хочет есть
+            return "🍎?"
         if self.energy < 30:
-            return "💤"  # Хочет спать
+            return "💤"  
         if self.happiness < 30:
-            return "😢"  # Грустит
+            return "😢"  
         if self.happiness > 85:
-            return "❤️"  # Счастлив
+            return "❤️"  
         if self.state == "happy":
-            return "✨"  # Радость после действия
-        return "🙂"      # Всё в порядке
+            return "✨"  
+        return "🙂"      
+
+    def sleep(self):
+        if not self.is_alive: return "Мертвые не спят..."
+        self.energy = 100
+        self.happiness += 5
+        self.state = "happy"
+        self._cap_stats()
+        logger.log(f"{self.name} поспал и восстановил энергию.")
+        return f"{self.name} сладко поспал и полон сил! 💤"
+
+    def drain_stats(self, hunger_points, energy_points):
+        self.hunger -= hunger_points
+        self.energy -= energy_points
+        if self.hunger <= 0 or self.energy <= 0:
+            self.is_alive = False
+            self.state = "dead"
+        self._cap_stats()
