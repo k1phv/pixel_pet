@@ -122,3 +122,18 @@ class Pet:
         self.hunger = max(0, min(100, self.hunger))
         self.energy = max(0, min(100, self.energy))
         self.happiness = max(0, min(100, self.happiness))
+
+    def get_emotion_icon(self):
+        if not self.is_alive:
+            return "👻"
+        if self.hunger < 30:
+            return "🍎?" # Хочет есть
+        if self.energy < 30:
+            return "💤"  # Хочет спать
+        if self.happiness < 30:
+            return "😢"  # Грустит
+        if self.happiness > 85:
+            return "❤️"  # Счастлив
+        if self.state == "happy":
+            return "✨"  # Радость после действия
+        return "🙂"      # Всё в порядке

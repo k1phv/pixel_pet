@@ -206,22 +206,47 @@ class App:
     def draw_pet(self):
         self.canvas.delete("all")
         
+        if self.revive_btn is not None and self.revive_btn.winfo_exists():
+            self.revive_btn.destroy()
+            self.revive_btn = None
+
         if not self.pet.is_alive:
             self.canvas.create_text(160, 110, text="👻", font=("Arial", 60))
             self.canvas.create_text(160, 170, text="Игра окончена", font=("Arial", 12, "bold"), fill="red")
-            
             self.revive_btn = tk.Button(self.canvas, text="Начать заново (Бесплатно)", 
                                         bg="#2ecc71", fg="white", font=("Arial", 10, "bold"), 
                                         command=self.revive_pet)
             self.canvas.create_window(160, 220, window=self.revive_btn)
             return
 
+        emotion = self.pet.get_emotion_icon()
+
+        self.canvas.create_oval(230, 70, 270, 110, fill="#f0f0f0", outline="#cccccc") # Основной круг
+        self.canvas.create_oval(220, 100, 235, 115, fill="#f0f0f0", outline="#cccccc") # Маленький пузырек
+        self.canvas.create_text(250, 90, text=emotion, font=("Arial", 18))
+
         c = COLORS[self.pet.color_name]["main"]
-        self.canvas.create_oval(100, 100, 220, 220, fill=c, width=2)
-        self.canvas.create_oval(130, 140, 145, 155, fill="white")
-        self.canvas.create_oval(175, 140, 190, 155, fill="white")
-        self.canvas.create_oval(135, 148, 140, 153, fill="black")
-        self.canvas.create_oval(180, 148, 185, 153, fill="black")
+
+        self.canvas.create_oval(110, 210, 210, 230, fill="#eeeeee", outline="")
+
+        self.canvas.create_oval(100, 100, 220, 220, fill=c, width=2, outline="#333333")
+
+        eye_color = "black"
+        if self.pet.happiness < 30:
+            self.canvas.create_line(130, 150, 145, 150, width=2)
+            self.canvas.create_line(175, 150, 190, 150, width=2)
+        else:
+            self.canvas.create_oval(130, 140, 145, 155, fill="white")
+            self.canvas.create_oval(175, 140, 190, 155, fill="white")
+            self.canvas.create_oval(135, 148, 140, 153, fill="black")
+            self.canvas.create_oval(180, 148, 185, 153, fill="black")
+
+        if self.pet.happiness < 30:
+            self.canvas.create_arc(140, 170, 180, 190, start=0, extent=180, style=tk.ARC, width=2) # Грустный
+        elif self.pet.hunger < 40:
+             self.canvas.create_oval(155, 175, 165, 185, fill="#555555") # Удивленный/голодный рот "О"
+        else:
+            self.canvas.create_arc(140, 160, 180, 180, start=180, extent=180, style=tk.ARC, width=2) # Улыбка
 
     def revive_pet(self):
         self.pet.reset()
