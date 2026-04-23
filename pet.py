@@ -31,12 +31,13 @@ class Pet:
         self.current_weather = "Солнечно"
 
     def reset(self):
-        """Метод для бесплатного воскрешения (рестарт параметров)"""
         self.hunger = 100
         self.energy = 100
         self.happiness = 100
         self.is_alive = True
         self.state = "normal"
+        self.level = 1
+        self.xp = 0
         logger.log(f"Питомец {self.name} был воскрешен бесплатно.")
 
     def save_progress(self):

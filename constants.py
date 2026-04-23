@@ -19,8 +19,7 @@ FOOD_TYPES = {
 ACHIEVEMENTS = {
     "rich": {"title": "Богач", "desc": "Накопить 200 монет", "goal": 200},
     "survivor": {"title": "Выживший", "desc": "Прожить 50 тиков", "goal": 50},
-    "glutton": {"title": "Обжора", "desc": "Съесть 10 предметов", "goal": 10},
-    "zombie": {"title": "Восставший", "desc": "Воскресить питомца", "goal": 1}
+    "glutton": {"title": "Обжора", "desc": "Съесть 10 предметов", "goal": 10}
 }
 
 WEATHER_TYPES = {
