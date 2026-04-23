@@ -164,10 +164,35 @@ class App:
 
     def open_wardrobe(self):
         w = tk.Toplevel(self.root)
-        w.title("Стиль")
-        for c in COLORS:
-            btn = tk.Button(w, text=c.upper(), bg=COLORS[c]["main"], command=lambda n=c: self.set_color(n, w))
-            btn.pack(fill=tk.X, padx=20, pady=5)
+        w.title("Стиль и цвета")
+        w.geometry("350x450")
+        w.configure(bg="#f3e5f5")
+
+        tk.Label(w, text="🎨 ГАРДЕРОБ", font=("Arial", 14, "bold"), bg="#f3e5f5").pack(pady=15)
+
+        style_price = 100 
+
+        for c_name in COLORS:
+            is_unlocked = c_name in self.pet.unlocked_colors
+            
+            if is_unlocked:
+                btn_text = f"{c_name.upper()} (Используется)" if c_name == self.pet.color_name else f"{c_name.upper()} (Куплено)"
+                btn_color = "#a5d6a7" if c_name == self.pet.color_name else "#e0e0e0"
+            else:
+                btn_text = f"{c_name.upper()} — {style_price} 💰"
+                btn_color = COLORS[c_name]["main"]
+
+            btn = tk.Button(
+                w, 
+                text=btn_text, 
+                bg=btn_color,
+                font=("Arial", 10, "bold" if is_unlocked else "normal"),
+                height=2,
+                command=lambda n=c_name: self.set_color(n, w)
+            )
+            btn.pack(fill=tk.X, padx=30, pady=5)
+
+        tk.Label(w, text="* Базовый цвет всегда бесплатен", font=("Arial", 8, "italic"), bg="#f3e5f5").pack(pady=10)
 
     def set_color(self, name, win):
         if name in self.pet.unlocked_colors:
