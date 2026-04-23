@@ -147,10 +147,13 @@ class Pet:
         logger.log(f"{self.name} поспал и восстановил энергию.")
         return f"{self.name} сладко поспал и полон сил! 💤"
 
-    def drain_stats(self, hunger_points, energy_points):
+    def drain_stats(self, hunger_points, energy_points, happiness_boost=0):
         self.hunger -= hunger_points
         self.energy -= energy_points
+        self.happiness += happiness_boost 
+
         if self.hunger <= 0 or self.energy <= 0:
             self.is_alive = False
             self.state = "dead"
+            
         self._cap_stats()

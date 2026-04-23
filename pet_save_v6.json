@@ -1,13 +1,13 @@
 {
     "name": "\u041f\u0438\u043a\u0441\u0435\u043b\u044c",
-    "hunger": 62.0,
-    "energy": 56.0,
-    "happiness": 68.0,
+    "hunger": 32.0,
+    "energy": 72.0,
+    "happiness": 85.0,
     "is_alive": true,
-    "age_ticks": 397,
-    "coins": 17,
+    "age_ticks": 413,
+    "coins": 35,
     "level": 3,
-    "xp": 5,
+    "xp": 70,
     "color": "orange",
     "unlocked": [
         "orange",
@@ -18,8 +18,8 @@
         "\ud83c\udf54 \u0411\u0443\u0440\u0433\u0435\u0440": 0,
         "\ud83c\udf70 \u0422\u043e\u0440\u0442": 0
     },
-    "food_eaten": 4,
-    "weather": "\u0413\u0440\u043e\u0437\u0430",
+    "food_eaten": 5,
+    "weather": "\u0421\u043e\u043b\u043d\u0435\u0447\u043d\u043e",
     "ach_list": [
         "survivor"
     ]
