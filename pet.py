@@ -38,6 +38,7 @@ class Pet:
         self.state = "normal"
         self.level = 1
         self.xp = 0
+        self.coins = 50
         logger.log(f"Питомец {self.name} был воскрешен бесплатно.")
 
     def save_progress(self):
